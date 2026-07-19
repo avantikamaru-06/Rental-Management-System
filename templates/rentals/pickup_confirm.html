@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Pickup - Order #{{ order.id }} - RentalPro{% endblock %}
+
+{% block page_header %}Confirm Product Pickup{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-clipboard-check text-primary me-2"></i>Pickup Checklist (Order #{{ order.id }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <span class="text-muted d-block small">Customer Portal User</span>
+                    <h5 class="text-white">{{ order.customer.user.first_name }} {{ order.customer.user.last_name }} ({{ order.customer.user.email }})</h5>
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="p-3 bg-dark border border-secondary rounded mb-4">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="cond_check" id="cond_check" required>
+                            <label class="form-check-label text-white ms-2" for="cond_check">
+                                <strong>Condition Checked</strong><br>
+                                <span class="text-muted small">I have verified that all items are in functional condition and free from unrecorded damages.</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="id_check" id="id_check" required>
+                            <label class="form-check-label text-white ms-2" for="id_check">
+                                <strong>ID Verified</strong><br>
+                                <span class="text-muted small">I have verified the customer's government-issued identity document matching their profile name.</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="sign_check" id="sign_check" required>
+                            <label class="form-check-label text-white ms-2" for="sign_check">
+                                <strong>Agreement Signed</strong><br>
+                                <span class="text-muted small">The customer has signed the physical/digital rental terms and liability agreement.</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between gap-3">
+                        <a href="{% url 'rentals:order_detail' order.pk %}" class="btn btn-secondary-custom flex-grow-1">Cancel</a>
+                        <button type="submit" class="btn btn-accent flex-grow-1"><i class="fa-solid fa-circle-check me-2"></i>Confirm & Release Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

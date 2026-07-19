@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Quotation #{{ quotation.id }} Detail - RentalPro{% endblock %}
+
+{% block page_header %}Quotation #{{ quotation.id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Info & Item List (Left column) -->
+    <div class="col-lg-8 mb-4">
+        <!-- Details Card -->
+        <div class="card card-custom">
+            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-list text-primary me-2"></i>Quotation Items</h5>
+                <span class="badge {% if quotation.status == 'converted' %}badge-active{% elif quotation.status == 'approved' %}bg-primary{% else %}badge-pending{% endif %}">
+                    {{ quotation.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Period Option</th>
+                                <th>Duration</th>
+                                <th>Unit Price</th>
+                                <th>Total Price</th>
+                                {% if quotation.status == 'draft' %}
+                                    <th>Action</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>{{ item.rental_period.name }}</td>
+                                    <td>{{ item.duration }}</td>
+                                    <td>${{ item.price|floatformat:2 }}</td>
+                                    <td class="fw-bold">${{ item.price|add:0 }}</td>
+                                    {% if quotation.status == 'draft' %}
+                                        <td>
+                                            <a href="{% url 'quotation:quotation_item_delete' item.pk %}" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i></a>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4 small">No items added to this quotation yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer border-top border-secondary p-3 text-end bg-dark bg-opacity-20">
+                <span class="text-white fs-5 fw-bold">Quoted Total: ${{ quotation.total_amount }}</span>
+            </div>
+        </div>
+
+        <!-- Add item form (Only when in draft) -->
+        {% if quotation.status == 'draft' %}
+            <div class="card card-custom">
+                <div class="card-header border-secondary">
+                    <h5 class="m-0 text-white"><i class="fa-solid fa-cart-plus text-primary me-2"></i>Add Item to Quotation</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label text-muted small">Select Product</label>
+                                {{ item_form.product }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small">Rental Period Unit</label>
+                                {{ item_form.rental_period }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small">Duration</label>
+                                {{ item_form.duration }}
+                            </div>
+                        </div>
+                        <button type="submit" name="add_item" class="btn btn-accent mt-3 w-100"><i class="fa-solid fa-plus me-1"></i>Add Product Item</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Meta details & Actions (Right column) -->
+    <div class="col-lg-4">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-circle-info text-primary me-2"></i>Summary Metadata</h5>
+            </div>
+            <div class="card-body py-3 small">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Customer Profile</span>
+                    <span class="text-white fw-bold">{{ quotation.customer.user.username }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Template Applied</span>
+                    <span class="text-white fw-bold">{{ quotation.get_template_name_display }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Date Logged</span>
+                    <span class="text-white">{{ quotation.created_at|date:"d M Y" }}</span>
+                </div>
+                
+                {% if quotation.template_name == 'corporate' %}
+                    <div class="alert alert-info bg-primary bg-opacity-10 border-primary mt-3 mb-0">
+                        <i class="fa-solid fa-tags me-1 text-primary"></i> <strong>Corporate discount applied:</strong> 15% discount automatically factored into item prices.
+                    </div>
+                {% elif quotation.template_name == 'special_event' %}
+                    <div class="alert alert-info bg-primary bg-opacity-10 border-primary mt-3 mb-0">
+                        <i class="fa-solid fa-tags me-1 text-primary"></i> <strong>Special Event Deal:</strong> 10% discount automatically factored into item prices.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Action Prompts -->
+        <div class="d-grid gap-2 mb-4">
+            <!-- Admin send to customer -->
+            {% if is_admin and quotation.status == 'draft' %}
+                <a href="{% url 'quotation:quotation_send' quotation.pk %}" class="btn btn-accent py-3"><i class="fa-solid fa-paper-plane me-2"></i>Lock & Send to Customer</a>
+            {% endif %}
+            
+            <!-- Customer Approve quote -->
+            {% if quotation.status == 'sent' %}
+                {% if not is_admin and quotation.customer.user == request.user %}
+                    <a href="{% url 'quotation:quotation_approve' quotation.pk %}" class="btn btn-accent py-3"><i class="fa-solid fa-circle-check me-2"></i>Approve & Confirm Offer</a>
+                {% else %}
+                    <button class="btn btn-secondary-custom py-3" disabled><i class="fa-solid fa-clock me-2"></i>Awaiting Customer Approval</button>
+                {% endif %}
+            {% endif %}
+
+            <!-- Admin Convert to order -->
+            {% if is_admin and quotation.status == 'approved' %}
+                <a href="{% url 'quotation:quotation_convert' quotation.pk %}" class="btn btn-accent py-3"><i class="fa-solid fa-circle-check me-2"></i>Convert to Active Order</a>
+            {% endif %}
+            
+            {% if quotation.status == 'converted' %}
+                <button class="btn btn-secondary-custom py-3" disabled><i class="fa-solid fa-circle-check text-success me-2"></i>Converted to Rental Order</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

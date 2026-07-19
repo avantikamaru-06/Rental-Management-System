@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - RentalPro{% endblock %}
+
+{% block page_header %}My Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Profile Card (Left Column) -->
+    <div class="col-lg-4 mb-4">
+        <div class="card card-custom text-center">
+            <div class="card-body">
+                <div class="position-relative d-inline-block mb-3">
+                    {% if customer_profile and customer_profile.profile_image %}
+                        <img src="{{ customer_profile.profile_image.url }}" class="rounded-circle border border-primary p-1" width="128" height="128" style="object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white mx-auto border border-primary p-1" style="width: 128px; height: 128px; font-size: 3rem; font-weight: bold;">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h4 class="text-white m-0">{{ user.first_name }} {{ user.last_name }}</h4>
+                <p class="text-primary m-0 mt-1">@{{ user.username }}</p>
+                <p class="text-muted small mt-2"><i class="fa-solid fa-envelope me-1"></i>{{ user.email }}</p>
+                <p class="text-muted small"><i class="fa-solid fa-phone me-1"></i>{{ customer_profile.phone|default:"No phone configured" }}</p>
+                
+                <hr class="border-secondary my-4">
+                
+                <div class="text-start">
+                    <h6 class="text-white mb-2"><i class="fa-solid fa-truck me-2"></i>Saved Delivery Address</h6>
+                    <p class="text-muted small">{{ customer_profile.saved_address|default:"No saved address." }}</p>
+                    
+                    <h6 class="text-white mb-2 mt-4"><i class="fa-solid fa-credit-card me-2"></i>Payment Details</h6>
+                    <p class="text-muted small mb-0">{{ customer_profile.payment_info|default:"No payment information configured." }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Form (Right Column) -->
+    <div class="col-lg-8">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-user-pen text-primary me-2"></i>Update Profile Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <h6 class="text-primary mb-3"><i class="fa-solid fa-circle-info me-2"></i>Personal Info</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white">First Name</label>
+                            {{ u_form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white">Last Name</label>
+                            {{ u_form.last_name }}
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-white">Email Address</label>
+                        {{ u_form.email }}
+                    </div>
+                    
+                    {% if c_form %}
+                    <h6 class="text-primary mb-3"><i class="fa-solid fa-address-card me-2"></i>Rental Profile Details</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white">Phone Number</label>
+                            {{ c_form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white">Profile Image</label>
+                            {{ c_form.profile_image }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Shipping Address</label>
+                        {{ c_form.saved_address }}
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-white">Payment Information</label>
+                        {{ c_form.payment_info }}
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-accent px-4"><i class="fa-solid fa-floppy-disk me-2"></i>Save Profile Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+input.form-control,
+textarea.form-control,
+select.form-control {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+
+input.form-control::placeholder,
+textarea.form-control::placeholder {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+input.form-control:focus,
+textarea.form-control:focus,
+select.form-control:focus {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+</style>
+{% endblock %}

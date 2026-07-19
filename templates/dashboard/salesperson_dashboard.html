@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Sales Dashboard - RentalPro{% endblock %}
+{% block page_header %}Salesperson Dashboard{% endblock %}
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-3 mb-3"><div class="card card-custom"><div class="card-body"><span class="text-muted small">Today's Rentals</span><h3 class="text-white">{{ today_rentals }}</h3></div></div></div>
+  <div class="col-md-3 mb-3"><div class="card card-custom"><div class="card-body"><span class="text-muted small">Today's Collection</span><h3 class="text-white">${{ today_collection|floatformat:2 }}</h3></div></div></div>
+  <div class="col-md-3 mb-3"><div class="card card-custom"><div class="card-body"><span class="text-muted small">Pending Returns</span><h3 class="text-white">{{ pending_returns }}</h3></div></div></div>
+  <div class="col-md-3 mb-3"><div class="card card-custom"><div class="card-body"><span class="text-muted small">My Customers</span><h3 class="text-white">{{ customer_count }}</h3></div></div></div>
+</div>
+<div class="card card-custom"><div class="card-header d-flex justify-content-between"><h5 class="m-0 text-white">My Rentals</h5><a href="{% url 'rentals:walk_in_order_create' %}" class="btn btn-sm btn-accent">New Walk-in Rental</a></div><div class="card-body p-0"><div class="table-responsive"><table class="table table-dark table-hover m-0"><thead><tr><th>Order</th><th>Customer</th><th>Dates</th><th>Total</th><th>Status</th></tr></thead><tbody>{% for order in recent_orders %}<tr><td><a href="{% url 'rentals:order_detail' order.pk %}">#{{ order.id }}</a></td><td>{{ order.customer.display_name }}</td><td>{{ order.pickup_date|date:"d M" }} – {{ order.return_date|date:"d M" }}</td><td>${{ order.total_amount }}</td><td>{{ order.get_status_display }}</td></tr>{% empty %}<tr><td colspan="5" class="text-center">No rentals yet.</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% endblock %}

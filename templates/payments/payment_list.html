@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Payments Log - RentalPro{% endblock %}
+
+{% block page_header %}Payments Log{% endblock %}
+
+{% block content %}
+<div class="card card-custom">
+    <div class="card-header">
+        <h5 class="m-0 text-white"><i class="fa-solid fa-money-bill-transfer text-primary me-2"></i>Financial Transactions Log</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover table-custom m-0">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Order</th>
+                        <th>Payment Date</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Payment Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments %}
+                        <tr>
+                            <td>#{{ p.id }}</td>
+                            <td><a href="{% url 'rentals:order_detail' p.order.pk %}" class="text-primary text-decoration-none fw-bold">Order #{{ p.order.id }}</a></td>
+                            <td class="small text-white">{{ p.date|date:"d M Y H:i" }}</td>
+                            <td>
+                                <span class="badge {% if p.payment_type == 'rental' %}bg-primary{% elif p.payment_type == 'deposit' %}bg-warning{% elif p.payment_type == 'late_fee' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ p.get_payment_type_display }}
+                                </span>
+                            </td>
+                            <td class="fw-bold">${{ p.amount }}</td>
+                            <td class="small text-white">{{ p.get_payment_method_display }}</td>
+                            <td>
+                                <span class="badge {% if p.status == 'success' %}badge-active{% else %}badge-danger{% endif %}">
+                                    {{ p.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5 small">No transaction records logged.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

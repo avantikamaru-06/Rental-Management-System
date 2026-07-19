@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - RentalPro{% endblock %}
+
+{% block page_header %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Product image (Left column) -->
+    <div class="col-lg-6 mb-4">
+        <div class="card card-custom p-3 text-center bg-dark">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" class="img-fluid rounded" style="max-height: 400px; object-fit: contain; width: 100%;">
+            {% else %}
+                <div class="py-5 d-flex flex-column align-items-center justify-content-center text-muted" style="min-height: 300px;">
+                    <i class="fa-solid fa-image fa-4x mb-3"></i>
+                    <span>No image available</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Specs and Add to Cart (Right column) -->
+    <div class="col-lg-6">
+        <div class="card card-custom">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="badge {% if product.is_available %}bg-success{% else %}bg-danger{% endif %}">
+                    {% if product.is_available %}Available{% else %}Rented / Out of Stock{% endif %}
+                </span>
+                
+                {% if is_admin %}
+                <div>
+                    <a href="{% url 'products:product_update' product.pk %}" class="btn btn-sm btn-secondary-custom me-2"><i class="fa-solid fa-pen"></i></a>
+                    <a href="{% url 'products:product_delete' product.pk %}" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i></a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-body">
+                <span class="text-primary small text-uppercase fw-bold">{{ product.category.name }}</span>
+                <h3 class="text-white mt-1 mb-3">{{ product.name }}</h3>
+                <p class="text-muted mb-4">{{ product.description|default:"No description provided." }}</p>
+                
+                <!-- Spec Grid -->
+                <h6 class="text-white border-bottom border-secondary pb-2 mb-3">Product Specifications</h6>
+                <div class="row mb-4">
+                    <div class="col-6 mb-2">
+                        <span class="text-muted small d-block">Brand</span>
+                        <span class="text-white">{{ product.brand|default:"-" }}</span>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <span class="text-muted small d-block">Manufacturer</span>
+                        <span class="text-white">{{ product.manufacturer|default:"-" }}</span>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <span class="text-muted small d-block">Color</span>
+                        <span class="text-white">{{ product.color|default:"-" }}</span>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <span class="text-muted small d-block">Size</span>
+                        <span class="text-white">{{ product.size|default:"-" }}</span>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <h6 class="text-white border-bottom border-secondary pb-2 mb-3">Rental Cost Setup</h6>
+                <div class="row mb-4">
+                    <div class="col-4">
+                        <span class="text-muted small d-block">Daily Base Rate</span>
+                        <h4 class="text-white">${{ product.rental_price }}</h4>
+                    </div>
+                    <div class="col-4">
+                        <span class="text-muted small d-block">Security Deposit</span>
+                        <h4 class="text-white">${{ product.security_deposit }}</h4>
+                    </div>
+                    <div class="col-4">
+                        <span class="text-muted small d-block">Late Fee / hour</span>
+                        <h4 class="text-white">${{ product.late_fee_rate }}</h4>
+                    </div>
+                </div>
+                
+                <!-- Add to Cart (Customer Portal only) -->
+                {% if user_role == 'customer' or not user.is_authenticated %}
+                    {% if product.is_available or user_role == 'customer' %}
+                        <form method="POST" action="{% url 'rentals:cart_add' product.pk %}" class="card p-3 border-secondary bg-dark">
+                            {% csrf_token %}
+                            <h6 class="text-white mb-3"><i class="fa-solid fa-cart-plus text-primary me-2"></i>Configure Rental Period</h6>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-white">Start Date</label>
+                                    <input type="date" name="start_date" id="start_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-white">End Date</label>
+                                    <input type="date" name="end_date" id="end_date" class="form-control" required>
+                                </div>
+                                <div class="col-12">
+                                    <div class="small text-muted" id="availability-status">Select dates to check availability and pricing.</div>
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label small text-white">Rental Period Option</label>
+                                    <select name="period" class="form-select" required>
+                                        <option value="" disabled selected>Select duration unit...</option>
+                                        {% for p in periods %}
+                                            <option value="{{ p.id }}">{{ p.name }} (x{{ p.multiplier }} Rate Factor)</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small text-white">Rental Days</label>
+                                    <input type="number" name="duration" id="rental_days" class="form-control" value="1" min="1" readonly>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-accent mt-3 w-100"><i class="fa-solid fa-cart-shopping me-2"></i>Add to Shopping Cart</button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-danger bg-danger bg-opacity-10 border-danger text-center">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i> This product is currently rented. Check back later!
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const startDate = document.getElementById('start_date');
+const endDate = document.getElementById('end_date');
+const days = document.getElementById('rental_days');
+const availabilityStatus = document.getElementById('availability-status');
+
+function parseDateInput(value) {
+    if (!value) return null;
+    const text = value.trim();
+    const isoMatch = /^\d{4}-\d{2}-\d{2}$/.exec(text);
+    if (isoMatch) {
+        const [year, month, day] = text.split('-').map(Number);
+        return new Date(Date.UTC(year, month - 1, day));
+    }
+    const slashMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text);
+    if (slashMatch) {
+        const [, day, month, year] = slashMatch.map(Number);
+        return new Date(Date.UTC(year, month - 1, day));
+    }
+    return null;
+}
+
+function normalizeValue(value) {
+    const parsed = parseDateInput(value);
+    if (!parsed) return '';
+    const year = parsed.getUTCFullYear();
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function setNormalizedValue(input) {
+    const normalized = normalizeValue(input.value);
+    if (normalized) {
+        input.value = normalized;
+    }
+}
+
+function updateDays() {
+    setNormalizedValue(startDate);
+    setNormalizedValue(endDate);
+    if (!startDate.value || !endDate.value) {
+        availabilityStatus.textContent = 'Select dates to check availability and pricing.';
+        return;
+    }
+    const start = new Date(startDate.value + 'T00:00:00');
+    const end = new Date(endDate.value + 'T00:00:00');
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+        days.value = 1;
+        availabilityStatus.textContent = 'End date must be after the start date.';
+        availabilityStatus.className = 'small text-danger';
+        return;
+    }
+    const rentalDays = Math.floor((end - start) / 86400000) + 1;
+    days.value = rentalDays;
+    availabilityStatus.className = 'small text-success';
+    availabilityStatus.textContent = `Estimated rental: ${rentalDays} day(s).`;
+}
+
+function refreshAvailability() {
+    const start = normalizeValue(startDate.value);
+    const end = normalizeValue(endDate.value);
+    if (!start || !end) return;
+    const url = new URL('/rentals/availability/', window.location.origin);
+    url.searchParams.set('product_id', '{{ product.id }}');
+    url.searchParams.set('start_date', start);
+    url.searchParams.set('end_date', end);
+    fetch(url.href)
+        .then((response) => response.json())
+        .then((data) => {
+            availabilityStatus.className = data.available ? 'small text-success' : 'small text-danger';
+            availabilityStatus.textContent = `${data.message} ${data.days ? 'Estimated rental: ' + data.days + ' day(s).' : ''}`;
+        })
+        .catch(() => {
+            availabilityStatus.className = 'small text-muted';
+            availabilityStatus.textContent = 'Availability check could not be completed.';
+        });
+}
+
+startDate.addEventListener('change', () => { updateDays(); refreshAvailability(); });
+endDate.addEventListener('change', () => { updateDays(); refreshAvailability(); });
+startDate.addEventListener('blur', () => { updateDays(); refreshAvailability(); });
+endDate.addEventListener('blur', () => { updateDays(); refreshAvailability(); });
+updateDays();
+</script>
+{% endblock %}

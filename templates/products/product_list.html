@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Products Catalog - RentalPro{% endblock %}
+
+{% block page_header %}Products Catalog{% endblock %}
+
+{% block content %}
+<!-- Admin Actions -->
+{% if is_admin %}
+<div class="row mb-4">
+    <div class="col text-end">
+        <a href="{% url 'products:product_create' %}" class="btn btn-accent"><i class="fa-solid fa-plus me-2"></i>Add New Product</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Search and Filter Bar -->
+<div class="card card-custom">
+    <div class="card-body">
+        <form method="GET" action="{% url 'products:product_list' %}" class="row g-3">
+            <div class="col-lg-4 col-md-6">
+                <label class="form-label text-white small">Search Products</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-secondary text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Search by name, desc..." value="{{ query|default:'' }}">
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label text-muted small">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                        <option value="{{ c.id }}" {% if selected_category == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label text-muted small">Brand</label>
+                <select name="brand" class="form-select">
+                    <option value="">All Brands</option>
+                    {% for b in brands %}
+                        <option value="{{ b }}" {% if selected_brand == b %}selected{% endif %}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label text-muted small">Availability</label>
+                <select name="availability" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="available" {% if selected_availability == 'available' %}selected{% endif %}>Available Only</option>
+                    <option value="rented" {% if selected_availability == 'rented' %}selected{% endif %}>Rented Only</option>
+                </select>
+            </div>
+            
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-accent px-4"><i class="fa-solid fa-filter me-2"></i>Apply Filters</button>
+                <a href="{% url 'products:product_list' %}" class="btn btn-secondary-custom px-4"><i class="fa-solid fa-rotate-left me-2"></i>Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Product Grid -->
+<div class="row mt-4">
+    {% for product in products %}
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+            <div class="card card-custom h-100 d-flex flex-column">
+                <!-- Image Wrapper -->
+                <div class="position-relative bg-dark" style="height: 200px; border-top-left-radius: 12px; border-top-right-radius: 12px; overflow: hidden;">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" class="w-100 h-100" style="object-fit: cover;">
+                    {% else %}
+                        <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                            <i class="fa-solid fa-image fa-3x mb-2"></i>
+                            <span class="small">No image available</span>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Availability status badge -->
+                    <span class="position-absolute top-2 start-2 badge {% if product.is_available %}bg-success{% else %}bg-danger{% endif %}" style="top: 12px; left: 12px;">
+                        {% if product.is_available %}Available{% else %}Rented{% endif %}
+                    </span>
+                </div>
+                
+                <!-- Details -->
+                <div class="card-body d-flex flex-column flex-grow-1 p-3">
+                    <span class="text-primary small text-uppercase fw-bold">{{ product.category.name }}</span>
+                    <h5 class="card-title text-white mt-1 mb-2">{{ product.name }}</h5>
+                    <p class="text-white small mb-3 flex-grow-1">{{ product.description|truncatewords:15 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-3">
+                        <div>
+                            <span class="text-white small">Daily Price</span>
+                            <h5 class="text-white m-0">${{ product.rental_price }}</h5>
+                        </div>
+                        <div>
+                            <span class="text-white small">Deposit</span>
+                            <h6 class="text-white m-0">${{ product.security_deposit }}</h6>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="card-footer border-top border-secondary p-3 d-flex justify-content-between gap-2" style="background-color: rgba(0, 0, 0, 0.1);">
+                    <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-sm btn-accent flex-grow-1">View details</a>
+                    {% if is_admin %}
+                        <a href="{% url 'products:product_update' product.pk %}" class="btn btn-sm btn-secondary-custom" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                        <a href="{% url 'products:product_delete' product.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="fa-solid fa-trash"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="card card-custom text-center py-5">
+                <div class="card-body">
+                    <i class="fa-solid fa-boxes-stacked fa-3x text-muted mb-3"></i>
+                    <h4 class="text-white">No products found</h4>
+                    <p class="text-white">Try adjusting your filters or search keywords.</p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+<style>
+input.form-control,
+textarea.form-control,
+select.form-control {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+
+input.form-control::placeholder,
+textarea.form-control::placeholder {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+input.form-control:focus,
+textarea.form-control:focus,
+select.form-control:focus {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+</style>
+{% endblock %}

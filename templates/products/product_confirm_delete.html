@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Product - RentalPro{% endblock %}
+
+{% block page_header %}Delete Product{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 50vh;">
+    <div class="col-md-6">
+        <div class="card card-custom border-danger">
+            <div class="card-header bg-danger bg-opacity-10">
+                <h5 class="m-0 text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Confirm Deletion</h5>
+            </div>
+            <div class="card-body text-center">
+                <p class="text-white">Are you sure you want to permanently delete the product <strong>"{{ product.name }}"</strong>?</p>
+                <p class="text-muted small">This action cannot be undone. Any active rentals linked to this item will reference its static properties.</p>
+                
+                <form method="POST" class="mt-4 d-flex justify-content-center gap-3">
+                    {% csrf_token %}
+                    <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-secondary-custom px-4">Cancel</a>
+                    <button type="submit" class="btn btn-danger px-4"><i class="fa-solid fa-trash me-2"></i>Delete Permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

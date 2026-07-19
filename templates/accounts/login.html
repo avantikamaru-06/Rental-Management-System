@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - RentalPro{% endblock %}
+
+{% block page_header %}Sign In{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5">
+        <div class="card card-custom">
+            <div class="card-header text-center">
+                <h3 class="m-0 text-white"><i class="fa-solid fa-lock text-primary me-2"></i>Sign In</h3>
+                <p class="text-muted m-0 mt-1">Access your RentalPro account</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'accounts:login' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">
+                    {% csrf_token %}
+                    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label text-white">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label text-white">Password</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-accent w-100 mb-3">Sign In</button>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'accounts:forgot_password' %}" class="text-primary text-decoration-none small">Forgot Password?</a>
+                        <a href="{% url 'accounts:register' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="text-primary text-decoration-none small">Don't have an account? Register</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Helpful credentials note for the examiner/user -->
+        <div class="card card-custom border-primary bg-opacity-10 text-center">
+            <div class="card-body py-3">
+                <span class="small text-white">
+                    <i class="fa-solid fa-circle-info text-primary me-1"></i> Admin login: use credentials from seed data.
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+input.form-control,
+textarea.form-control,
+select.form-control {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+
+input.form-control::placeholder,
+textarea.form-control::placeholder {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+input.form-control:focus,
+textarea.form-control:focus,
+select.form-control:focus {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Return - Order #{{ order.id }} - RentalPro{% endblock %}
+
+{% block page_header %}Confirm Product Return{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-clipboard-check text-primary me-2"></i>Return Inspection & Deposit Settlement</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <span class="text-muted d-block small">Customer Portal User</span>
+                    <h5 class="text-white">{{ order.customer.user.first_name }} {{ order.customer.user.last_name }}</h5>
+                </div>
+
+                <!-- Late Return calculations display -->
+                <div class="alert {% if late_fee_amount > 0 %}alert-danger bg-danger bg-opacity-10 border-danger{% else %}alert-success bg-success bg-opacity-10 border-success{% endif %} mb-4">
+                    {% if late_fee_amount > 0 %}
+                        <h6 class="alert-heading text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Late Return Detected!</h6>
+                        <p class="m-0 small">The rental return deadline was <strong>{{ order.return_date|date:"d M Y H:i" }}</strong>. The current actual time is <strong>{{ actual_now|date:"d M Y H:i" }}</strong>.</p>
+                        <ul class="m-0 mt-2 small">
+                            <li>Total Overdue Units: <strong>{{ hours_overdue }} hours</strong></li>
+                            <li>Accumulated Late Fee: <strong class="text-danger">${{ late_fee_amount|floatformat:2 }}</strong></li>
+                        </ul>
+                    {% else %}
+                        <h6 class="alert-heading text-success fw-bold"><i class="fa-solid fa-circle-check me-2"></i>On-Time Return</h6>
+                        <p class="m-0 small">Product returned before or within the grace period of the scheduled return date ({{ order.return_date|date:"d M Y H:i" }}).</p>
+                    {% endif %}
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="p-3 bg-dark border border-secondary rounded mb-4">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="damage_check" id="damage_check" required>
+                            <label class="form-check-label text-white ms-2" for="damage_check">
+                                <strong>Damage Checked</strong><br>
+                                <span class="text-muted small">I have thoroughly audited the returned products for structural or functional defects.</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="acc_check" id="acc_check" required>
+                            <label class="form-check-label text-white ms-2" for="acc_check">
+                                <strong>Accessories Accounted For</strong><br>
+                                <span class="text-muted small">I have verified that all cables, components, and cases are present.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <h6 class="text-white border-bottom border-secondary pb-2 mb-3">Inspection Remarks</h6>
+                    <div class="mb-3">
+                        <label for="damage_report" class="form-label text-muted small">Damage Report (Leave blank if none)</label>
+                        <textarea name="damage_report" id="damage_report" class="form-control" rows="2" placeholder="Describe any scratches, broken parts, etc."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="missing_accessories" class="form-label text-muted small">Missing Accessories (Leave blank if none)</label>
+                        <textarea name="missing_accessories" id="missing_accessories" class="form-control" rows="2" placeholder="List any cords, adapters, or items missing."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="repair_status" class="form-label text-muted small">Repair Workflow Status</label>
+                        <select name="repair_status" id="repair_status" class="form-select">
+                            <option value="none">No damages / perfect condition</option>
+                            <option value="pending">Send to repair assessment (Damage reported)</option>
+                            <option value="repaired">Damage repaired / settled instantly</option>
+                        </select>
+                    </div>
+
+                    <!-- Deposit Settlement Calc -->
+                    <h6 class="text-white border-bottom border-secondary pb-2 mb-3">Security Deposit Settlement</h6>
+                    <div class="p-3 bg-dark border border-secondary rounded mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Deposit Collected</span>
+                            <span class="text-white">${{ order.security_deposit_total }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Late Fee Deduction</span>
+                            <span class="text-danger">-${{ late_fee_amount|floatformat:2 }}</span>
+                        </div>
+                        <hr class="border-secondary my-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-white fw-bold">Settlement Refund Amount</span>
+                            <span class="text-success fw-bold" id="refund-calc">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between gap-3">
+                        <a href="{% url 'rentals:order_detail' order.pk %}" class="btn btn-secondary-custom flex-grow-1">Cancel</a>
+                        <button type="submit" class="btn btn-accent flex-grow-1"><i class="fa-solid fa-circle-check me-2"></i>Settle & Return Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Dynamically calculate the refund amount for client visual
+    const depositTotal = {{ order.security_deposit_total }};
+    const lateFee = {{ late_fee_amount }};
+    let refund = depositTotal - lateFee;
+    if (refund < 0) refund = 0;
+    
+    document.getElementById('refund-calc').innerText = '$' + refund.toFixed(2);
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Register - RentalPro{% endblock %}
+
+{% block page_header %}Register Account{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-6">
+        <div class="card card-custom">
+            <div class="card-header text-center">
+                <h3 class="m-0 text-white"><i class="fa-solid fa-user-plus text-primary me-2"></i>Create Account</h3>
+                <p class="text-muted m-0 mt-1">Join RentalPro and rent products today</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'accounts:register' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">
+                    {% csrf_token %}
+                    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                    <div class="alert alert-info border-0 bg-dark text-muted small mb-3">
+                        <i class="fa-solid fa-circle-info me-2"></i>New accounts are activated after the simulated checkout payment is confirmed.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-white">First Name</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-white">Last Name</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-white">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-white">Email Address</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-white">Phone Number</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white">Address</label>
+                        {{ form.saved_address }}
+                        {% if form.saved_address.errors %}
+                            <div class="text-danger small mt-1">{{ form.saved_address.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-white">Password</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label text-white">Confirm Password</label>
+                            {{ form.confirm_password }}
+                            {% if form.confirm_password.errors %}
+                                <div class="text-danger small mt-1">{{ form.confirm_password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-accent w-100 mb-3">Register</button>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'accounts:login' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="text-primary text-decoration-none small">Already have an account? Sign In</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+input.form-control,
+textarea.form-control,
+select.form-control {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+
+input.form-control::placeholder,
+textarea.form-control::placeholder {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+input.form-control:focus,
+textarea.form-control:focus,
+select.form-control:focus {
+    color: #fff !important;
+    background-color: #111827 !important;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Business Reports - RentalPro{% endblock %}
+
+{% block page_header %}Business Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* CSS overrides for printing only a tab */
+    @media print {
+        #sidebar, .main-navbar, footer, .nav-tabs, .btn-print-actions, .alert {
+            display: none !important;
+        }
+        #content-wrapper {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+        .content-body {
+            padding: 0 !important;
+        }
+        .tab-pane {
+            display: block !important;
+            opacity: 1 !important;
+        }
+        .card-custom {
+            border: none !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
+            color: black !important;
+        }
+        .text-white {
+            color: black !important;
+        }
+        .table-custom th {
+            background-color: #f3f4f6 !important;
+            color: #374151 !important;
+            border-color: #d1d5db !important;
+        }
+        .table-custom td {
+            background-color: transparent !important;
+            color: black !important;
+            border-color: #d1d5db !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row btn-print-actions mb-4">
+    <div class="col text-end">
+        <button onclick="window.print();" class="btn btn-accent"><i class="fa-solid fa-print me-2"></i>Print Selected Report</button>
+    </div>
+</div>
+
+<!-- Tabs selector -->
+<ul class="nav nav-tabs border-secondary mb-4 btn-print-actions" id="reportTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active text-red border-secondary" id="rental-tab" data-bs-toggle="tab" data-bs-target="#rental-report" type="button" role="tab">Rental Log</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-red border-secondary" id="customer-tab" data-bs-toggle="tab" data-bs-target="#customer-report" type="button" role="tab">Customer Activity</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-red border-secondary" id="revenue-tab" data-bs-toggle="tab" data-bs-target="#revenue-report" type="button" role="tab">Revenue Breakdown</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-red border-secondary" id="deposit-tab" data-bs-toggle="tab" data-bs-target="#deposit-report" type="button" role="tab">Security Deposits</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-red border-secondary" id="late-tab" data-bs-toggle="tab" data-bs-target="#late-report" type="button" role="tab">Late Return Fees</button>
+    </li>
+</ul>
+
+<!-- Tabs Contents -->
+<div class="tab-content" id="reportTabsContent">
+    
+    <!-- 1. Rental Report -->
+    <div class="tab-pane fade show active" id="rental-report" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header border-secondary">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Complete Rental Orders Report</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Order Date</th>
+                                <th>Pickup Date</th>
+                                <th>Return Date</th>
+                                <th>Rental Fee</th>
+                                <th>Deposit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in rentals %}
+                                <tr>
+                                    <td>#{{ r.id }}</td>
+                                    <td>{{ r.customer.display_name }}</td>
+                                    <td>{{ r.order_date|date:"d M Y" }}</td>
+                                    <td>{{ r.pickup_date|date:"d M Y" }}</td>
+                                    <td>{{ r.return_date|date:"d M Y" }}</td>
+                                    <td>${{ r.total_amount }}</td>
+                                    <td>${{ r.security_deposit_total }}</td>
+                                    <td>{{ r.get_status_display }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4 small">No rentals found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 2. Customer Activity -->
+    <div class="tab-pane fade" id="customer-report" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header border-secondary">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-users text-primary me-2"></i>Customer Activity Report</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Customer Name</th>
+                                <th>Phone</th>
+                                <th>Orders Placed</th>
+                                <th>Total Revenue Generated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in customers %}
+                                <tr>
+                                    <td>{{ c.id }}</td>
+                                    <td>{% if c.user %}{{ c.user.username }}{% else %}-{% endif %}</td>
+                                    <td>{{ c.display_name }}</td>
+                                    <td>{{ c.phone|default:"-" }}</td>
+                                    <td>{{ c.order_count }}</td>
+                                    <td class="fw-bold text-success">${{ c.total_spent|default:"0.00" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4 small">No customer data.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 3. Revenue Breakdown -->
+    <div class="tab-pane fade" id="revenue-report" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header border-secondary">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-money-bill-wave text-primary me-2"></i>Revenue breakdown Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-4"><div class="p-3 border border-secondary rounded"><span class="text-muted small">Daily Report — Revenue Today</span><h4 class="text-success mb-0">${{ revenue.daily_revenue|floatformat:2 }}</h4></div></div>
+                    <div class="col-md-6 mb-4"><div class="p-3 border border-secondary rounded"><span class="text-muted small">Monthly Report — Revenue This Month</span><h4 class="text-success mb-0">${{ revenue.monthly_revenue|floatformat:2 }}</h4></div></div>
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-primary mb-3">Revenue Collections</h6>
+                        <table class="table table-dark border-secondary">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted">Total Rental Charges:</td>
+                                    <td class="fw-bold text-success text-end">${{ revenue.rental_revenue|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Total Late return Fees:</td>
+                                    <td class="fw-bold text-success text-end">${{ revenue.late_fee_revenue|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="border-top border-secondary">
+                                    <td class="text-white fw-bold">Net System Revenue:</td>
+                                    <td class="fw-bold text-primary fs-5 text-end">${{ revenue.net_revenue|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-primary mb-3">Held Security Deposits</h6>
+                        <table class="table table-dark border-secondary">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted">Active Security Deposits Held:</td>
+                                    <td class="fw-bold text-warning text-end">${{ revenue.collected_deposits|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Refunded Security Deposits:</td>
+                                    <td class="fw-bold text-muted text-end">${{ revenue.refunded_deposits|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 4. Security Deposits -->
+    <div class="tab-pane fade" id="deposit-report" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header border-secondary">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-shield-halved text-primary me-2"></i>Security Deposits Ledger</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Deposit ID</th>
+                                <th>Order ID</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date Collected</th>
+                                <th>Date Refunded</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in deposits %}
+                                <tr>
+                                    <td>#{{ d.id }}</td>
+                                    <td>#{{ d.order.id }}</td>
+                                    <td>${{ d.amount }}</td>
+                                    <td>
+                                        <span class="badge {% if d.status == 'refunded' %}bg-secondary{% elif d.status == 'collected' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ d.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="small text-white">{{ d.collected_at|date:"d M Y H:i" }}</td>
+                                    <td class="small text-white">{{ d.refunded_at|date:"d M Y H:i"|default:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4 small">No security deposit records.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 5. Late Return Fees -->
+    <div class="tab-pane fade" id="late-report" role="tabpanel">
+        <div class="card card-custom">
+            <div class="card-header border-secondary">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-triangle-exclamation text-primary me-2"></i>Late Fee Ledger</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Fee ID</th>
+                                <th>Order ID</th>
+                                <th>Amount Charged</th>
+                                <th>Hours Overdue</th>
+                                <th>Settlement Status</th>
+                                <th>Created Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lf in late_fees %}
+                                <tr>
+                                    <td>#{{ lf.id }}</td>
+                                    <td>#{{ lf.order.id }}</td>
+                                    <td class="text-danger fw-bold">${{ lf.amount }}</td>
+                                    <td>{{ lf.units_overdue }} hrs</td>
+                                    <td>
+                                        <span class="badge {% if lf.status == 'paid' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ lf.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="small text-white">{{ lf.created_at|date:"d M Y H:i" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4 small">No late fees charged.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

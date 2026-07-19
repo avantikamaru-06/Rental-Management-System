@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - RentalPro{% endblock %}
+
+{% block page_header %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="row">
+    <!-- Revenue -->
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100 border-start border-4 border-success">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white text-uppercase small m-0">Rental Revenue</h6>
+                    <h3 class="text-white mt-1 mb-0">${{ total_revenue|floatformat:2 }}</h3>
+                </div>
+                <div class="rounded-circle bg-success bg-opacity-25 p-3 text-success">
+                    <i class="fa-solid fa-hand-holding-dollar fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Held Deposits -->
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100 border-start border-4 border-warning">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white text-uppercase small m-0">Security Deposits</h6>
+                    <h3 class="text-white mt-1 mb-0">${{ held_deposits|floatformat:2 }}</h3>
+                </div>
+                <div class="rounded-circle bg-warning bg-opacity-25 p-3 text-warning">
+                    <i class="fa-solid fa-shield-halved fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Late Fee Collection -->
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100 border-start border-4 border-danger">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white text-uppercase small m-0">Late Fee Collection</h6>
+                    <h3 class="text-white mt-1 mb-0">${{ late_fees_collected|floatformat:2 }}</h3>
+                </div>
+                <div class="rounded-circle bg-danger bg-opacity-25 p-3 text-danger">
+                    <i class="fa-solid fa-triangle-exclamation fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Total Customers -->
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100 border-start border-4 border-primary">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white text-uppercase small m-0">Total Customers</h6>
+                    <h3 class="text-white mt-1 mb-0">{{ total_customers }}</h3>
+                </div>
+                <div class="rounded-circle bg-primary bg-opacity-25 p-3 text-primary">
+                    <i class="fa-solid fa-users fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3 col-sm-6 mb-4"><div class="card card-custom h-100"><div class="card-body text-center"><h6 class="text-white text-uppercase small">Salespersons</h6><h2 class="text-primary">{{ total_salespersons }}</h2></div></div></div>
+    <div class="col-md-3 col-sm-6 mb-4"><div class="card card-custom h-100"><div class="card-body text-center"><h6 class="text-white text-uppercase small">Walk-in Rentals</h6><h2 class="text-white">{{ walk_in_rentals }}</h2></div></div></div>
+    <div class="col-md-3 col-sm-6 mb-4"><div class="card card-custom h-100"><div class="card-body text-center"><h6 class="text-white text-uppercase small">Online Rentals</h6><h2 class="text-white">{{ online_rentals }}</h2></div></div></div>
+    <div class="col-md-3 col-sm-6 mb-4"><div class="card card-custom h-100"><div class="card-body text-center"><h6 class="text-white text-uppercase small">Today's Revenue</h6><h2 class="text-success">${{ todays_revenue|floatformat:2 }}</h2><span class="text-muted small">{{ pending_returns }} pending returns</span></div></div></div>
+</div>
+
+<div class="row">
+    <!-- Products stats -->
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100">
+            <div class="card-body text-center">
+                <h6 class="text-white text-uppercase small">Total Products</h6>
+                <h2 class="text-white mt-2">{{ total_products }}</h2>
+                <span class="text-white small">catalog size</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100">
+            <div class="card-body text-center">
+                <h6 class="text-white text-uppercase small">Available Products</h6>
+                <h2 class="text-success mt-2">{{ available_products }}</h2>
+                <span class="text-success small"><i class="fa-solid fa-circle-check me-1"></i>in stock</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100">
+            <div class="card-body text-center">
+                <h6 class="text-white text-uppercase small">Rented Products</h6>
+                <h2 class="text-warning mt-2">{{ rented_products }}</h2>
+                <span class="text-warning small"><i class="fa-solid fa-clock me-1"></i>checked out</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card card-custom h-100">
+            <div class="card-body text-center">
+                <h6 class="text-white text-uppercase small">Due Today</h6>
+                <h2 class="text-danger mt-2">{{ due_today_count }}</h2>
+                <span class="text-danger small"><i class="fa-solid fa-circle-exclamation me-1"></i>requires return</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Analytics Chart -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-chart-line text-primary me-2"></i>Revenue Analytics (Last 6 Months)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Overdue list -->
+    <div class="col-lg-4 mb-4">
+        <div class="card card-custom">
+            <div class="card-header border-danger">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>Overdue Rentals</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush list-group-dark">
+                    {% for order in overdue_rentals %}
+                        <a href="{% url 'rentals:order_detail' order.pk %}" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 text-danger">Order #{{ order.id }}</h6>
+                                <small class="text-white">{{ order.return_date|date:"d M Y" }}</small>
+                            </div>
+                            <p class="mb-1 small text-white">Customer: {{ order.customer.user.username }}</p>
+                            <span class="badge bg-danger">Overdue</span>
+                        </a>
+                    {% empty %}
+                        <div class="p-4 text-center text-muted small">No overdue rentals. Excellent!</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Task boards (Upcoming pick & returns) -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-truck-ramp-box text-primary me-2"></i>Upcoming Pickups</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Pickup Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in upcoming_pickups %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.customer.user.username }}</td>
+                                    <td class="small text-white">{{ order.pickup_date|date:"d M H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'rentals:pickup_confirm' order.pk %}" class="btn btn-sm btn-accent py-1">Confirm Pickup</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-white py-4 small">No upcoming pickups today.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-truck-loading text-primary me-2"></i>Upcoming Returns</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Return Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in upcoming_returns %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.customer.user.username }}</td>
+                                    <td class="small text-white">{{ order.return_date|date:"d M H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'rentals:return_confirm' order.pk %}" class="btn btn-sm btn-accent py-1">Confirm Return</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-white py-4 small">No upcoming returns expected today.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Rentals & Payments -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-cart-shopping text-primary me-2"></i>Recent Rental Orders</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_rentals %}
+                                <tr>
+                                    <td><a href="{% url 'rentals:order_detail' order.pk %}" class="text-primary text-decoration-none">#{{ order.id }}</a></td>
+                                    <td>{{ order.customer.user.username }}</td>
+                                    <td>
+                                        <span class="badge {% if order.status == 'returned' %}badge-active{% elif order.status == 'overdue' %}badge-danger{% else %}badge-pending{% endif %}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>${{ order.total_amount }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4 small">No orders recorded yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-receipt text-primary me-2"></i>Recent Payments</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Order</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in recent_payments %}
+                                <tr>
+                                    <td>#{{ p.id }}</td>
+                                    <td>#{{ p.order.id }}</td>
+                                    <td class="small text-white">{{ p.get_payment_type_display }}</td>
+                                    <td>${{ p.amount }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4 small">No payments completed yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    
+    // Parse Monthly Revenue from Django context
+    const monthLabels = [{% for r in monthly_revenue %}"{{ r.month }}",{% endfor %}];
+    const revenueData = [{% for r in monthly_revenue %}{{ r.amount }},{% endfor %}];
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthLabels,
+            datasets: [{
+                label: 'Monthly Revenue ($)',
+                data: revenueData,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#f3f4f6'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: '#374151'
+                    },
+                    ticks: {
+                        color: '#9ca3af'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: '#374151'
+                    },
+                    ticks: {
+                        color: '#9ca3af'
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

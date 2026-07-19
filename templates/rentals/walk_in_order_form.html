@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Walk-in Rental - RentalPro{% endblock %}
+{% block page_header %}Create Walk-in Rental{% endblock %}
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+.select2-container--default .select2-selection--single { background-color: #111827; border: 1px solid #374151; border-radius: 8px; min-height: 42px; }
+.select2-container--default .select2-selection--single .select2-selection__rendered { color: #fff; line-height: 42px; padding-left: 14px; }
+.select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; }
+.select2-dropdown { background-color: #111827; border: 1px solid #374151; }
+.select2-container--default .select2-results__option { color: #fff; }
+.select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: #3b82f6; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="card card-custom"><div class="card-header"><h5 class="m-0 text-white">Walk-in Order</h5></div><div class="card-body">
+<form method="post">{% csrf_token %}<div class="row g-3">
+<div class="col-md-6"><label class="form-label text-white">Customer Name</label><input class="form-control" name="customer_name" placeholder="Customer name" required></div>
+<div class="col-md-6"><label class="form-label text-white">Phone</label><input class="form-control" name="phone" placeholder="Phone number"></div>
+<div class="col-12"><label class="form-label text-white">Address</label><textarea class="form-control" name="address" rows="2" placeholder="Customer address"></textarea></div>
+<div class="col-12"><label class="form-label text-white">Product</label><select class="form-select" id="product-select" name="product" aria-label="Search products" required></select></div>
+<div class="col-12"><div class="card border-secondary bg-dark p-3" id="product-details">No matching products found.</div></div>
+<div class="col-md-4"><label class="form-label text-white">Start Date</label><input class="form-control" type="date" name="start_date" required></div><div class="col-md-4"><label class="form-label text-white">End Date</label><input class="form-control" type="date" name="end_date" required></div>
+<div class="col-md-4"><label class="form-label text-white">Payment Method</label><select class="form-select" name="payment_method" aria-label="Payment method"><option value="cash">Cash</option><option value="card">Card</option><option value="bank_transfer">Bank Transfer</option></select></div>
+<div class="col-md-4"><label class="form-label text-white">Status</label><select class="form-select" name="status" aria-label="Order status"><option value="confirmed">Confirmed</option><option value="picked_up">Picked Up</option></select></div>
+</div><button class="btn btn-accent mt-4" type="submit">Save Rental</button></form></div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+<script>
+(function () {
+    const select = $('#product-select');
+    const detailsPanel = document.getElementById('product-details');
+
+    function renderDetails(product) {
+        if (!product || !product.value) {
+            detailsPanel.innerHTML = '<div class="text-muted">No matching products found.</div>';
+            return;
+        }
+        detailsPanel.innerHTML = `
+            <div class="d-flex align-items-center gap-3">
+                ${product.image_url ? `<img src="${product.image_url}" alt="${product.text}" class="rounded" width="72" height="72" style="object-fit: cover;">` : '<div class="rounded bg-secondary d-flex align-items-center justify-content-center" style="width:72px;height:72px;"><i class="fa-solid fa-image"></i></div>'}
+                <div>
+                    <h6 class="text-white mb-1">${product.text}</h6>
+                    <div class="small text-muted">Brand: ${product.brand || '-'}</div>
+                    <div class="small text-muted">Category: ${product.category || '-'}</div>
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3"><span class="text-muted small d-block">Price / Day</span><strong class="text-white">$${product.price}</strong></div>
+                <div class="col-md-3"><span class="text-muted small d-block">Security Deposit</span><strong class="text-white">$${product.deposit}</strong></div>
+                <div class="col-md-3"><span class="text-muted small d-block">Current Stock</span><strong class="text-white">${product.available ? 'In stock' : 'Unavailable'}</strong></div>
+                <div class="col-md-3"><span class="text-muted small d-block">Availability</span><strong class="${product.available ? 'text-success' : 'text-danger'}">${product.status}</strong></div>
+            </div>`;
+    }
+
+    select.select2({
+        placeholder: 'Search products by name, brand, category or ID',
+        minimumInputLength: 0,
+        ajax: {
+            url: '{% url "rentals:product_search_ajax" %}',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return { q: params.term || '' };
+            },
+            processResults: function (data) {
+                return {
+                    results: data.results.map(function (item) {
+                        return { id: item.value, text: item.text, ...item };
+                    })
+                };
+            }
+        },
+        templateResult: function (item) {
+            if (!item.id) return item.text;
+            return $('<span>' + item.text + ' <small class="text-muted">(' + (item.brand || item.category || 'Product') + ')</small></span>');
+        },
+        language: {
+            noResults: function () {
+                return 'No matching products found.';
+            }
+        }
+    });
+
+    select.on('select2:select', function (event) {
+        renderDetails(event.params.data);
+    });
+
+    select.on('select2:clear', function () {
+        renderDetails(null);
+    });
+})();
+</script>
+{% endblock %}

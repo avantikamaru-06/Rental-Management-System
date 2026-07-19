@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - RentalPro{% endblock %}
+
+{% block page_header %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-box-open text-primary me-2"></i>Product Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Product Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Category</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Brand Name</label>
+                            {{ form.brand }}
+                            {% if form.brand.errors %}
+                                <div class="text-danger small mt-1">{{ form.brand.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Manufacturer</label>
+                            {{ form.manufacturer }}
+                            {% if form.manufacturer.errors %}
+                                <div class="text-danger small mt-1">{{ form.manufacturer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted">Color</label>
+                            {{ form.color }}
+                            {% if form.color.errors %}
+                                <div class="text-danger small mt-1">{{ form.color.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted">Size</label>
+                            {{ form.size }}
+                            {% if form.size.errors %}
+                                <div class="text-danger small mt-1">{{ form.size.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row border-top border-secondary pt-3 mt-4">
+                        <h6 class="text-primary mb-3"><i class="fa-solid fa-dollar-sign me-2"></i>Pricing & Financial Rules</h6>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted">Rental Price ($/day)</label>
+                            {{ form.rental_price }}
+                            {% if form.rental_price.errors %}
+                                <div class="text-danger small mt-1">{{ form.rental_price.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted">Security Deposit ($)</label>
+                            {{ form.security_deposit }}
+                            {% if form.security_deposit.errors %}
+                                <div class="text-danger small mt-1">{{ form.security_deposit.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted">Late Return Fee ($/hour)</label>
+                            {{ form.late_fee_rate }}
+                            {% if form.late_fee_rate.errors %}
+                                <div class="text-danger small mt-1">{{ form.late_fee_rate.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row border-top border-secondary pt-3 mt-3 mb-4">
+                        <h6 class="text-primary mb-3"><i class="fa-solid fa-image me-2"></i>Media & Inventory</h6>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-muted">Product Image</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="text-danger small mt-1">{{ form.image.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-center">
+                            <div class="form-check mt-4">
+                                {{ form.is_available }}
+                                <label class="form-check-label text-muted ms-2" for="id_is_available">Available for Rent</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-3">
+                        <a href="{% url 'products:product_list' %}" class="btn btn-secondary-custom px-4">Cancel</a>
+                        <button type="submit" class="btn btn-accent px-4"><i class="fa-solid fa-floppy-disk me-2"></i>Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

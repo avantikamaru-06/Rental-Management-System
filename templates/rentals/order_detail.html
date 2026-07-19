@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Order #{{ order.id }} Detail - RentalPro{% endblock %}
+
+{% block page_header %}Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<!-- Tracking Progress Bar -->
+<div class="card card-custom">
+    <div class="card-body">
+        <div class="d-flex justify-content-between text-center position-relative">
+            <div class="flex-grow-1 border-top border-secondary position-absolute top-50 start-0 translate-middle-y z-0" style="height: 2px; width: 100%;"></div>
+            
+            <div class="z-1 bg-secondary p-2 px-3 rounded-pill text-white" style="{% if order.status != 'draft' %}background-color: var(--accent-color) !important;{% endif %}">
+                <i class="fa-solid fa-circle-check me-2"></i>Confirmed
+            </div>
+            
+            <div class="z-1 bg-secondary p-2 px-3 rounded-pill text-white" style="{% if order.status == 'picked_up' or order.status == 'returned' or order.status == 'overdue' %}background-color: var(--accent-color) !important;{% endif %}">
+                <i class="fa-solid fa-truck-ramp-box me-2"></i>Picked Up
+            </div>
+            
+            <div class="z-1 bg-secondary p-2 px-3 rounded-pill text-white" style="{% if order.status == 'returned' %}background-color: var(--accent-color) !important;{% endif %}">
+                <i class="fa-solid fa-circle-check me-2"></i>Returned
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Items & Payments (Left Column) -->
+    <div class="col-lg-8">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Order Items</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Rental Period</th>
+                                <th>Duration</th>
+                                <th>Unit Cost</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>{{ item.rental_period.name }}</td>
+                                    <td>{{ item.duration }}</td>
+                                    <td>${{ item.price }}</td>
+                                    <td>${{ item.price|floatformat:2 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer border-top border-secondary p-4 bg-dark bg-opacity-20 text-end">
+                <span class="text-muted me-3">Subtotal: ${{ order.total_amount }}</span>
+                <span class="text-muted me-3">Deposit: ${{ order.security_deposit_total }}</span>
+                <span class="text-white fs-5 fw-bold">Grand Total Paid: ${{ order.total_amount|add:order.security_deposit_total }}</span>
+            </div>
+        </div>
+
+        <!-- Invoices & Transactions -->
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-file-invoice-dollar text-primary me-2"></i>Invoices & Billing History</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover table-custom m-0">
+                        <thead>
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>Date Issued</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inv in invoices %}
+                                <tr>
+                                    <td>{{ inv.invoice_number }}</td>
+                                    <td>{{ inv.issue_date|date:"d M Y" }}</td>
+                                    <td>${{ inv.total_amount }}</td>
+                                    <td>
+                                        <span class="badge {% if inv.is_paid %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if inv.is_paid %}Paid{% else %}Unpaid{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'payments:invoice_detail' inv.pk %}" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-print me-1"></i>View / Print Invoice</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4 small">No invoices generated.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Checklist & Details (Right Column) -->
+    <div class="col-lg-4">
+        <!-- Order Stats Info -->
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-circle-info text-primary me-2"></i>Order Summary</h5>
+            </div>
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Status</span>
+                    <span class="badge {% if order.status == 'returned' %}badge-active{% elif order.status == 'overdue' %}badge-danger{% else %}badge-pending{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Scheduled Pickup</span>
+                    <span class="text-white small">{{ order.pickup_date|date:"d M Y H:i" }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Scheduled Return</span>
+                    <span class="text-white small">{{ order.return_date|date:"d M Y H:i" }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-0">
+                    <span class="text-muted small">Delivery Option</span>
+                    <span class="text-white small">{{ order.get_delivery_type_display }}</span>
+                </div>
+                {% if order.delivery_type == 'delivery' %}
+                    <div class="mt-3 p-2 bg-dark rounded border border-secondary">
+                        <span class="text-muted small d-block">Delivery Address:</span>
+                        <span class="text-white small">{{ order.shipping_address }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- QR Code Visualizer -->
+        {% if order.status == 'confirmed' %}
+            <div class="card card-custom text-center">
+                <div class="card-header">
+                    <h5 class="m-0 text-white"><i class="fa-solid fa-qrcode text-primary me-2"></i>Pickup QR Code</h5>
+                </div>
+                <div class="card-body">
+                    <!-- SVG-based Mock QR Code -->
+                    <svg class="mx-auto my-2" width="128" height="128" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="100" height="100" fill="white"/>
+                        <!-- Outlines and random boxes for mock QR -->
+                        <rect x="5" y="5" width="20" height="20" stroke="black" stroke-width="4" fill="none"/>
+                        <rect x="9" y="9" width="12" height="12" fill="black"/>
+                        <rect x="75" y="5" width="20" height="20" stroke="black" stroke-width="4" fill="none"/>
+                        <rect x="79" y="9" width="12" height="12" fill="black"/>
+                        <rect x="5" y="75" width="20" height="20" stroke="black" stroke-width="4" fill="none"/>
+                        <rect x="9" y="79" width="12" height="12" fill="black"/>
+                        <rect x="35" y="35" width="30" height="30" fill="black"/>
+                        <rect x="40" y="40" width="20" height="20" fill="white"/>
+                        <rect x="45" y="45" width="10" height="10" fill="black"/>
+                        <!-- QR bits -->
+                        <rect x="35" y="10" width="5" height="15" fill="black"/>
+                        <rect x="50" y="5" width="15" height="5" fill="black"/>
+                        <rect x="10" y="35" width="15" height="5" fill="black"/>
+                        <rect x="75" y="35" width="5" height="15" fill="black"/>
+                        <rect x="75" y="60" width="15" height="5" fill="black"/>
+                        <rect x="35" y="75" width="10" height="5" fill="black"/>
+                    </svg>
+                    <p class="text-muted small mt-2 mb-0">Present this QR code to the store manager at the time of pickup.</p>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Checklist summaries -->
+        {% if pickup and pickup.actual_time %}
+            <div class="card card-custom">
+                <div class="card-header">
+                    <h5 class="m-0 text-white"><i class="fa-solid fa-circle-check text-success me-2"></i>Pickup Checklist Complete</h5>
+                </div>
+                <div class="card-body py-3 small">
+                    <div class="mb-2 text-muted"><i class="fa-solid fa-circle-check text-success me-2"></i>Condition Inspected</div>
+                    <div class="mb-2 text-muted"><i class="fa-solid fa-circle-check text-success me-2"></i>ID Document Verified</div>
+                    <div class="mb-3 text-muted"><i class="fa-solid fa-circle-check text-success me-2"></i>Agreement Signed</div>
+                    <div class="text-muted">Confirmed on: <span class="text-white">{{ pickup.actual_time|date:"d M Y H:i" }}</span></div>
+                    <div class="text-muted">Agent: <span class="text-white">{{ pickup.confirmed_by.username }}</span></div>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if return_detail and return_detail.actual_time %}
+            <div class="card card-custom">
+                <div class="card-header border-success">
+                    <h5 class="m-0 text-success"><i class="fa-solid fa-circle-check me-2"></i>Return Inspection Settled</h5>
+                </div>
+                <div class="card-body py-3 small">
+                    <div class="mb-2 text-muted"><i class="fa-solid fa-circle-check text-success me-2"></i>Damage Audit Executed</div>
+                    <div class="mb-2 text-muted"><i class="fa-solid fa-circle-check text-success me-2"></i>All Accessories Accounted For</div>
+                    <div class="text-muted">Returned on: <span class="text-white">{{ return_detail.actual_time|date:"d M Y H:i" }}</span></div>
+                    <div class="text-muted">Late Return Fee Charged: <span class="text-white">${{ return_detail.late_fee_charged }}</span></div>
+                    <div class="text-muted">Deposit Refunded: <span class="text-white">${{ return_detail.refunded_deposit }}</span></div>
+                    
+                    {% if return_detail.damage_report %}
+                        <div class="mt-3 p-2 bg-dark rounded border border-danger">
+                            <span class="text-danger small d-block">Damage Audit Note:</span>
+                            <span class="text-white small">{{ return_detail.damage_report }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Admin Checklist confirm prompts -->
+        {% if is_admin %}
+            {% if order.status == 'confirmed' %}
+                <div class="d-grid mb-4">
+                    <a href="{% url 'rentals:pickup_confirm' order.pk %}" class="btn btn-accent py-3"><i class="fa-solid fa-clipboard-check me-2"></i>Verify & Confirm Pickup</a>
+                </div>
+            {% elif order.status == 'picked_up' or order.status == 'overdue' %}
+                <div class="d-grid mb-4">
+                    <a href="{% url 'rentals:return_confirm' order.pk %}" class="btn btn-accent py-3"><i class="fa-solid fa-clipboard-check me-2"></i>Verify & Confirm Return</a>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

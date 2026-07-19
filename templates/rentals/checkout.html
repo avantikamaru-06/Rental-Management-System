@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - RentalPro{% endblock %}
+
+{% block page_header %}Checkout{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column: Checkout Form -->
+    <div class="col-lg-7 mb-4">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-truck-fast text-primary me-2"></i>Delivery & Rental Duration Setup</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="checkout-form">
+                    {% csrf_token %}
+                    
+                    <!-- Delivery Option -->
+                    <div class="mb-4">
+                        <label class="form-label text-muted small">Delivery Option</label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="delivery_type" id="delivery-pickup" value="pickup" checked>
+                                <label class="form-check-label text-white" for="delivery-pickup">
+                                    <i class="fa-solid fa-store me-1"></i> Customer Pickup (Store)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="delivery_type" id="delivery-shipping" value="delivery">
+                                <label class="form-check-label text-white" for="delivery-shipping">
+                                    <i class="fa-solid fa-truck me-1"></i> Delivery to Address
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Address (collapsible) -->
+                    <div class="mb-4 d-none" id="shipping-address-container">
+                        <label for="shipping_address" class="form-label text-muted small">Shipping / Delivery Address</label>
+                        <textarea name="shipping_address" id="shipping_address" class="form-control" rows="3" placeholder="Enter delivery address...">{{ customer.saved_address|default:'' }}</textarea>
+                    </div>
+
+                    <!-- Pickup & Return Dates -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="pickup_date" class="form-label small text-white">Start Date</label>
+                            <input type="date" name="pickup_date" id="pickup_date" class="form-control" value="{{ cart_start_date }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="return_date" class="form-label small text-white">End Date</label>
+                            <input type="date" name="return_date" id="return_date" class="form-control" value="{{ cart_end_date }}" required>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-4"><span class="text-muted small d-block">Rental Days</span><strong class="text-white" id="rental-days">—</strong></div>
+                        <div class="col-4"><span class="text-muted small d-block">Price Per Day</span><strong class="text-white" id="price-per-day">—</strong></div>
+                        <div class="col-4"><span class="text-muted small d-block">Rental Price</span><strong class="text-white" id="rental-price">—</strong></div>
+                    </div>
+                    <div class="small text-muted mb-4" id="availability-summary">Select dates to verify availability.</div>
+                    {{ cart_items_data|json_script:"cart-items-data" }}
+
+                    <!-- Mock Payment Gateway Card -->
+                    <h5 class="text-white border-top border-secondary pt-4 mb-3"><i class="fa-solid fa-credit-card text-primary me-2"></i>Simulated Checkout Payment</h5>
+                    <div class="card p-3 border-secondary bg-dark mb-4">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Cardholder Name</label>
+                            <input type="text" class="form-control" name="cardholder_name" value="{{ user.first_name|default:'' }} {{ user.last_name|default:'' }}" placeholder="Enter name as shown on card">
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-8">
+                                <label class="form-label text-muted small">Payment Details</label>
+                                <input type="text" class="form-control" name="payment_info" value="{{ customer.payment_info|default:'' }}" placeholder="e.g. Visa **** 4321 or Cash on Pickup" required>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label text-muted small">CVV</label>
+                                <input type="text" class="form-control" value="***" disabled>
+                            </div>
+                        </div>
+                        <span class="text-muted small mt-2 d-block"><i class="fa-solid fa-lock text-success me-1"></i>These are simulated payment details for the demo checkout flow.</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent w-100 py-3"><i class="fa-solid fa-circle-check me-2"></i>Pay & Confirm Rental Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Order Review -->
+    <div class="col-lg-5">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-basket-shopping text-primary me-2"></i>Review Order Items</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush list-group-dark">
+                    {% for item in cart_items %}
+                        <div class="list-group-item bg-transparent text-white border-secondary py-3">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <h6 class="mb-1 text-white">{{ item.product.name }}</h6>
+                                <span class="fw-bold">${{ item.total_price|floatformat:2 }}</span>
+                            </div>
+                            <div class="d-flex w-100 justify-content-between text-muted small">
+                                <span>Period: {{ item.period.name }} (x{{ item.duration }})</span>
+                                <span>Deposit: ${{ item.deposit|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer border-top border-secondary p-4 bg-dark bg-opacity-20">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Rental Cost Subtotal</span>
+                    <span class="text-white fw-bold">${{ total_rental|floatformat:2 }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Security Deposit Total</span>
+                    <span class="text-white fw-bold">${{ total_deposit|floatformat:2 }}</span>
+                </div>
+                
+                <hr class="border-secondary my-3">
+                
+                <div class="d-flex justify-content-between">
+                    <span class="text-white fw-bold fs-5">Grand Total Due Now</span>
+                    <span class="text-primary fs-4 fw-bold" id="grand-total">${{ grand_total|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle shipping address input visibility based on delivery choice
+    const pickupRadio = document.getElementById('delivery-pickup');
+    const shippingRadio = document.getElementById('delivery-shipping');
+    const addressContainer = document.getElementById('shipping-address-container');
+
+    pickupRadio.addEventListener('change', function() {
+        if (pickupRadio.checked) {
+            addressContainer.classList.add('d-none');
+            document.getElementById('shipping_address').removeAttribute('required');
+        }
+    });
+
+    shippingRadio.addEventListener('change', function() {
+        if (shippingRadio.checked) {
+            addressContainer.classList.remove('d-none');
+            document.getElementById('shipping_address').setAttribute('required', 'required');
+        }
+    });
+
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const nextWeek = new Date(tomorrow);
+    nextWeek.setDate(nextWeek.getDate() + 6);
+
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const startInput = document.getElementById('pickup_date');
+    const endInput = document.getElementById('return_date');
+    const availabilitySummary = document.getElementById('availability-summary');
+    const cartItems = JSON.parse(document.getElementById('cart-items-data').textContent);
+
+    function parseDateInput(value) {
+        if (!value) return null;
+        const text = value.trim();
+        const isoMatch = /^\d{4}-\d{2}-\d{2}$/.exec(text);
+        if (isoMatch) {
+            const [year, month, day] = text.split('-').map(Number);
+            return new Date(Date.UTC(year, month - 1, day));
+        }
+        const slashMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text);
+        if (slashMatch) {
+            const [, day, month, year] = slashMatch.map(Number);
+            return new Date(Date.UTC(year, month - 1, day));
+        }
+        return null;
+    }
+
+    function normalizeValue(value) {
+        const parsed = parseDateInput(value);
+        if (!parsed) return '';
+        return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, '0')}-${String(parsed.getUTCDate()).padStart(2, '0')}`;
+    }
+
+    function formatInputDate(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    if (!startInput.value) startInput.value = formatDate(tomorrow);
+    if (!endInput.value) endInput.value = formatDate(nextWeek);
+    const dailyRate = {{ daily_rate|floatformat:2 }};
+    const deposit = {{ total_deposit|floatformat:2 }};
+
+    function updateRentalTotal() {
+        const start = parseDateInput(startInput.value);
+        const end = parseDateInput(endInput.value);
+        if (!start || !end) {
+            availabilitySummary.textContent = 'Please enter valid dates.';
+            availabilitySummary.className = 'small text-danger';
+            return;
+        }
+        const normalizedStart = formatInputDate(start);
+        const normalizedEnd = formatInputDate(end);
+        startInput.value = normalizedStart;
+        endInput.value = normalizedEnd;
+        if (end < start) {
+            availabilitySummary.textContent = 'End date must be after the start date.';
+            availabilitySummary.className = 'small text-danger';
+            return;
+        }
+        const days = Math.floor((end - start) / 86400000) + 1;
+        const rental = dailyRate * days;
+        document.getElementById('rental-days').textContent = days;
+        document.getElementById('price-per-day').textContent = '$' + dailyRate.toFixed(2);
+        document.getElementById('rental-price').textContent = '$' + rental.toFixed(2);
+        document.getElementById('grand-total').textContent = '$' + (rental + deposit).toFixed(2);
+
+        const checks = cartItems.map((item) => {
+            const url = new URL('/rentals/availability/', window.location.origin);
+            url.searchParams.set('product_id', item.id);
+            url.searchParams.set('start_date', normalizedStart);
+            url.searchParams.set('end_date', normalizedEnd);
+            return fetch(url.href).then((response) => response.json());
+        });
+        Promise.all(checks).then((results) => {
+            const unavailable = results.filter((item) => !item.available);
+            availabilitySummary.className = unavailable.length ? 'small text-danger' : 'small text-success';
+            availabilitySummary.textContent = unavailable.length ? 'One or more products are unavailable for the selected dates.' : 'All selected products are available for the chosen dates.';
+        }).catch(() => {
+            availabilitySummary.className = 'small text-muted';
+            availabilitySummary.textContent = 'Availability check could not be completed.';
+        });
+    }
+    startInput.addEventListener('change', updateRentalTotal);
+    endInput.addEventListener('change', updateRentalTotal);
+    startInput.addEventListener('blur', updateRentalTotal);
+    endInput.addEventListener('blur', updateRentalTotal);
+    updateRentalTotal();
+</script>
+{% endblock %}

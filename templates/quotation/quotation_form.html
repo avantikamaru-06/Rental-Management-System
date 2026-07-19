@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Create Quotation - RentalPro{% endblock %}
+
+{% block page_header %}Create Quotation{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card card-custom">
+            <div class="card-header">
+                <h5 class="m-0 text-white"><i class="fa-solid fa-file-signature text-primary me-2"></i>Configure New Quotation</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    {% if is_admin %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Select Customer</label>
+                            {{ form.customer }}
+                            {% if form.customer.errors %}
+                                <div class="text-danger small mt-1">{{ form.customer.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <!-- For non-admin, the customer is hidden/auto-set and doesn't need input -->
+                        <div style="display: none;">
+                            {{ form.customer }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Requesting Customer</label>
+                            <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label text-muted small">Quotation Template Type</label>
+                        {{ form.template_name }}
+                        {% if form.template_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.template_name.errors.0 }}</div>
+                        {% endif %}
+                        <span class="text-muted small mt-2 d-block">
+                            Select corporate/event template to automatically configure pricing discount rules.
+                        </span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-3 mt-4">
+                        <a href="{% url 'quotation:quotation_list' %}" class="btn btn-secondary-custom px-4">Cancel</a>
+                        <button type="submit" class="btn btn-accent px-4"><i class="fa-solid fa-circle-right me-1"></i>Next: Add Items</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

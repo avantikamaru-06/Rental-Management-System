@@ -3,7 +3,6 @@ from django.contrib.auth import login as auth_login, logout as auth_logout, auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from django.urls import reverse
 from .forms import UserRegistrationForm, UserUpdateForm, CustomerUpdateForm
 from customers.models import Customer
 from django.contrib.auth.models import User
@@ -13,8 +12,6 @@ from .permissions import get_dashboard_url_name, is_customer
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard:home')
-
-    next_url = request.POST.get('next') or request.GET.get('next') or ''
     
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -27,26 +24,19 @@ def register_view(request):
                 for key in ('username', 'first_name', 'last_name', 'email', 'phone', 'saved_address')
             }
             request.session['pending_registration']['password_hash'] = make_password(form.cleaned_data['password'])
-            if request.session.pop('checkout_after_auth', False):
-                messages.success(request, "Your account is ready. Continue checkout to complete your rental.")
-                return redirect(next_url or 'rentals:checkout')
             messages.success(request, "Your details are ready. Choose a product and complete payment to activate your account.")
             return redirect('products:product_list')
     else:
         form = UserRegistrationForm()
         
-    return render(request, 'accounts/register.html', {'form': form, 'next_url': next_url})
+    return render(request, 'accounts/register.html', {'form': form})
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard:home')
-
-    next_url = request.POST.get('next') or request.GET.get('next') or ''
         
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
-        if next_url and ('checkout' in next_url or 'cart' in next_url):
-            request.session['checkout_after_auth'] = True
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
@@ -57,8 +47,6 @@ def login_view(request):
                 if is_customer(user) and not hasattr(user, 'customer_profile'):
                     Customer.objects.create(user=user)
                 messages.success(request, f"Welcome back, {username}!")
-                if request.session.pop('checkout_after_auth', False):
-                    return redirect(next_url or 'rentals:checkout')
                 return redirect(get_dashboard_url_name(user))
             else:
                 messages.error(request, "Invalid username or password.")
@@ -71,7 +59,7 @@ def login_view(request):
     form.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Username'})
     form.fields['password'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Password'})
         
-    return render(request, 'accounts/login.html', {'form': form, 'next_url': next_url})
+    return render(request, 'accounts/login.html', {'form': form})
 
 def logout_view(request):
     auth_logout(request)

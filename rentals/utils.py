@@ -37,29 +37,14 @@ def calculate_grand_total(rental_price, deposit):
 
 
 def parse_date_input(date_str):
-    """Parse YYYY-MM-DD, DD/MM/YYYY, or datetime-local string to an aware datetime."""
+    """Parse YYYY-MM-DD or datetime-local string to aware datetime."""
     if not date_str:
         return None
-    if hasattr(date_str, 'date') and hasattr(date_str, 'hour'):
-        return date_str
-
-    text = str(date_str).strip()
-    if not text:
-        return None
-
     try:
-        if 'T' in text:
-            dt = datetime.fromisoformat(text)
+        if 'T' in date_str:
+            dt = datetime.fromisoformat(date_str)
         else:
-            dt = None
-            for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
-                try:
-                    dt = datetime.strptime(text, fmt)
-                    break
-                except ValueError:
-                    continue
-            if dt is None:
-                return None
+            dt = datetime.strptime(date_str, '%Y-%m-%d')
             dt = dt.replace(hour=9, minute=0, second=0)
         if timezone.is_naive(dt):
             dt = timezone.make_aware(dt, timezone.get_current_timezone())

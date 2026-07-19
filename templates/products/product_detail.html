@@ -88,18 +88,15 @@
                             
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label small text-white">Start Date</label>
+                                    <label class="form-label text-muted small">Start Date</label>
                                     <input type="date" name="start_date" id="start_date" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small text-white">End Date</label>
+                                    <label class="form-label text-muted small">End Date</label>
                                     <input type="date" name="end_date" id="end_date" class="form-control" required>
                                 </div>
-                                <div class="col-12">
-                                    <div class="small text-muted" id="availability-status">Select dates to check availability and pricing.</div>
-                                </div>
                                 <div class="col-md-7">
-                                    <label class="form-label small text-white">Rental Period Option</label>
+                                    <label class="form-label text-muted small">Rental Period Option</label>
                                     <select name="period" class="form-select" required>
                                         <option value="" disabled selected>Select duration unit...</option>
                                         {% for p in periods %}
@@ -108,7 +105,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-5">
-                                    <label class="form-label small text-white">Rental Days</label>
+                                    <label class="form-label text-muted small">Rental Days</label>
                                     <input type="number" name="duration" id="rental_days" class="form-control" value="1" min="1" readonly>
                                 </div>
                             </div>
@@ -132,85 +129,16 @@
 const startDate = document.getElementById('start_date');
 const endDate = document.getElementById('end_date');
 const days = document.getElementById('rental_days');
-const availabilityStatus = document.getElementById('availability-status');
-
-function parseDateInput(value) {
-    if (!value) return null;
-    const text = value.trim();
-    const isoMatch = /^\d{4}-\d{2}-\d{2}$/.exec(text);
-    if (isoMatch) {
-        const [year, month, day] = text.split('-').map(Number);
-        return new Date(Date.UTC(year, month - 1, day));
-    }
-    const slashMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text);
-    if (slashMatch) {
-        const [, day, month, year] = slashMatch.map(Number);
-        return new Date(Date.UTC(year, month - 1, day));
-    }
-    return null;
-}
-
-function normalizeValue(value) {
-    const parsed = parseDateInput(value);
-    if (!parsed) return '';
-    const year = parsed.getUTCFullYear();
-    const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(parsed.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-function setNormalizedValue(input) {
-    const normalized = normalizeValue(input.value);
-    if (normalized) {
-        input.value = normalized;
-    }
-}
-
+const today = new Date().toISOString().split('T')[0];
+startDate.min = today; endDate.min = today;
 function updateDays() {
-    setNormalizedValue(startDate);
-    setNormalizedValue(endDate);
-    if (!startDate.value || !endDate.value) {
-        availabilityStatus.textContent = 'Select dates to check availability and pricing.';
-        return;
-    }
+    if (!startDate.value || !endDate.value) return;
     const start = new Date(startDate.value + 'T00:00:00');
     const end = new Date(endDate.value + 'T00:00:00');
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
-        days.value = 1;
-        availabilityStatus.textContent = 'End date must be after the start date.';
-        availabilityStatus.className = 'small text-danger';
-        return;
-    }
-    const rentalDays = Math.floor((end - start) / 86400000) + 1;
-    days.value = rentalDays;
-    availabilityStatus.className = 'small text-success';
-    availabilityStatus.textContent = `Estimated rental: ${rentalDays} day(s).`;
+    if (end < start) { days.value = 1; return; }
+    days.value = Math.floor((end - start) / 86400000) + 1;
 }
-
-function refreshAvailability() {
-    const start = normalizeValue(startDate.value);
-    const end = normalizeValue(endDate.value);
-    if (!start || !end) return;
-    const url = new URL('/rentals/availability/', window.location.origin);
-    url.searchParams.set('product_id', '{{ product.id }}');
-    url.searchParams.set('start_date', start);
-    url.searchParams.set('end_date', end);
-    fetch(url.href)
-        .then((response) => response.json())
-        .then((data) => {
-            availabilityStatus.className = data.available ? 'small text-success' : 'small text-danger';
-            availabilityStatus.textContent = `${data.message} ${data.days ? 'Estimated rental: ' + data.days + ' day(s).' : ''}`;
-        })
-        .catch(() => {
-            availabilityStatus.className = 'small text-muted';
-            availabilityStatus.textContent = 'Availability check could not be completed.';
-        });
-}
-
-startDate.addEventListener('change', () => { updateDays(); refreshAvailability(); });
-endDate.addEventListener('change', () => { updateDays(); refreshAvailability(); });
-startDate.addEventListener('blur', () => { updateDays(); refreshAvailability(); });
-endDate.addEventListener('blur', () => { updateDays(); refreshAvailability(); });
-updateDays();
+startDate.addEventListener('change', () => { endDate.min = startDate.value; updateDays(); });
+endDate.addEventListener('change', updateDays);
 </script>
 {% endblock %}

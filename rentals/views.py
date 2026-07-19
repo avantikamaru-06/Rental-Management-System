@@ -6,7 +6,6 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q
-from django.urls import reverse
 from products.models import Product, RentalPeriod, Pricelist
 from customers.models import Customer
 from payments.models import Payment, Invoice
@@ -18,68 +17,6 @@ from accounts.permissions import is_admin, is_salesperson, is_staff_member, is_c
 from .utils import calculate_rental_days, calculate_rental_price, calculate_grand_total, parse_date_input, is_product_available, get_unavailable_message, to_decimal
 
 # ---------------- CART SYSTEM ----------------
-
-def product_search_ajax(request):
-    query = request.GET.get('q', '').strip()
-    queryset = Product.objects.select_related('category').order_by('name')
-    if query:
-        numeric_query = None
-        try:
-            numeric_query = int(query)
-        except ValueError:
-            numeric_query = None
-        queryset = queryset.filter(
-            Q(name__icontains=query) |
-            Q(brand__icontains=query) |
-            Q(category__name__icontains=query) |
-            (Q(pk=numeric_query) if numeric_query is not None else Q())
-        )
-    results = []
-    for product in queryset[:50]:
-        results.append({
-            'value': product.pk,
-            'text': product.name,
-            'brand': product.brand or '',
-            'category': product.category.name if product.category else '',
-            'price': format(product.rental_price, '.2f'),
-            'deposit': format(product.security_deposit, '.2f'),
-            'image_url': product.image.url if product.image else '',
-            'available': product.is_available,
-            'status': 'Available' if product.is_available else 'Unavailable',
-        })
-    return JsonResponse({'results': results})
-
-
-def availability_check(request):
-    product_id = request.GET.get('product_id') or request.POST.get('product_id')
-    start_date = request.GET.get('start_date') or request.POST.get('start_date')
-    end_date = request.GET.get('end_date') or request.POST.get('end_date')
-
-    if not product_id:
-        return JsonResponse({'available': False, 'message': 'Please select a product first.'})
-
-    product = get_object_or_404(Product, pk=product_id)
-    parsed_start = parse_date_input(start_date)
-    parsed_end = parse_date_input(end_date)
-
-    if not parsed_start or not parsed_end:
-        return JsonResponse({'available': False, 'message': 'Please enter valid dates.'})
-    if parsed_end.date() < parsed_start.date():
-        return JsonResponse({'available': False, 'message': 'End date must be after the start date.'})
-
-    days = calculate_rental_days(parsed_start, parsed_end)
-    price = calculate_rental_price(product.rental_price, days)
-    is_available = is_product_available(product.id, parsed_start, parsed_end)
-    message = 'Available for the selected dates.' if is_available else get_unavailable_message()
-    return JsonResponse({
-        'available': is_available,
-        'message': message,
-        'days': days,
-        'price': format(price, '.2f'),
-        'deposit': format(product.security_deposit, '.2f'),
-        'product_name': product.name,
-    })
-
 
 def cart_view(request):
     cart = request.session.get('cart', {})
@@ -152,13 +89,7 @@ def cart_add(request, product_id):
         }
         
         request.session['cart'] = cart
-        if request.user.is_authenticated:
-            messages.success(request, "Product added to cart.")
-            return redirect('rentals:cart')
-
-        request.session['checkout_after_auth'] = True
-        messages.info(request, "Please sign in or register to continue checkout.")
-        return redirect(f"{reverse('accounts:login')}?next={reverse('rentals:checkout')}")
+        messages.success(request, "Product added to cart.")
     return redirect('rentals:cart')
 
 def cart_remove(request, item_key):
@@ -193,9 +124,8 @@ def checkout_view(request):
     customer = getattr(request.user, 'customer_profile', None) if request.user.is_authenticated else None
     pending_registration = request.session.get('pending_registration')
     if not customer and not pending_registration:
-        request.session['checkout_after_auth'] = True
-        messages.info(request, "Please sign in or register to continue checkout.")
-        return redirect(f"{reverse('accounts:login')}?next={reverse('rentals:checkout')}")
+        messages.error(request, "Please register or sign in before checkout.")
+        return redirect('accounts:register')
         
     cart_items = []
     total_rental = Decimal('0.00')
@@ -378,11 +308,7 @@ def checkout_view(request):
         'daily_rate': sum(item['product'].rental_price for item in cart_items),
         'cart_start_date': cart_start_date,
         'cart_end_date': cart_end_date,
-        'customer': customer,
-        'cart_items_data': [
-            {'id': item['product'].id, 'name': item['product'].name}
-            for item in cart_items
-        ],
+        'customer': customer
     })
 
 @login_required
@@ -476,6 +402,40 @@ def walk_in_order_create(request):
             messages.success(request, f"Walk-in rental #{order.id} saved successfully.")
             return redirect('rentals:order_detail', pk=order.pk)
     return render(request, 'rentals/walk_in_order_form.html', {'products': products})
+
+def product_search_ajax(request):
+    query = request.GET.get('q', '').strip()
+    queryset = Product.objects.select_related('category').order_by('name')
+    if query:
+        numeric_query = None
+        try:
+            numeric_query = int(query)
+        except ValueError:
+            numeric_query = None
+
+        queryset = queryset.filter(
+            Q(name__icontains=query) |
+            Q(brand__icontains=query) |
+            Q(category__name__icontains=query) |
+            (Q(pk=numeric_query) if numeric_query is not None else Q())
+        )
+
+    results = []
+    for product in queryset[:50]:
+        results.append({
+            'id': product.pk,
+            'text': f"{product.name} - {product.brand or 'No Brand'} ({product.category.name if product.category else 'Uncategorized'})",
+            'name': product.name,
+            'brand': product.brand or 'N/A',
+            'category': product.category.name if product.category else 'Uncategorized',
+            'price': format(product.rental_price, '.2f'),
+            'deposit': format(product.security_deposit, '.2f'),
+            'image_url': product.image.url if product.image else '',
+            'stock': 1 if product.is_available else 0,
+            'status': 'Available' if product.is_available else 'Unavailable',
+        })
+
+    return JsonResponse({'results': results})
 
 # ---------------- PICKUP & RETURN WORKFLOWS ----------------
 

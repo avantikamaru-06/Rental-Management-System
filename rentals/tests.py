@@ -101,17 +101,6 @@ class RentalLifecycleTests(TestCase):
         self.assertEqual(order.rental_days, 3)
         self.assertEqual(order.status, 'confirmed')
 
-    def test_guest_cart_add_redirects_to_login(self):
-        response = self.client.post(reverse('rentals:cart_add', args=[self.product.id]), {
-            'period': self.period.id,
-            'start_date': '2030-01-10',
-            'end_date': '2030-01-10',
-        })
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('accounts:login') + '?next=' + reverse('rentals:checkout'))
-        self.assertIn(f'{self.product.id}_{self.period.id}', self.client.session['cart'])
-
     def test_checkout_handles_float_money_values(self):
         self.client.login(username='testcust', password='pwd')
         session = self.client.session
@@ -174,31 +163,3 @@ class RentalLifecycleTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(RentalOrder.objects.count(), 0)
         self.assertFalse(Customer.objects.filter(user__username='newbuyer').exists())
-
-    def test_guest_checkout_redirects_to_login(self):
-        session = self.client.session
-        session['cart'] = {
-            f'{self.product.id}_{self.period.id}': {
-                'product_id': self.product.id,
-                'period_id': self.period.id,
-                'duration': 1,
-                'start_date': '2030-01-10',
-                'end_date': '2030-01-10',
-            }
-        }
-        session.save()
-
-        response = self.client.get(reverse('rentals:checkout'))
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('accounts:login') + '?next=' + reverse('rentals:checkout'))
-
-    def test_login_redirects_to_checkout_when_requested(self):
-        response = self.client.post(reverse('accounts:login'), {
-            'username': 'testcust',
-            'password': 'pwd',
-            'next': reverse('rentals:checkout'),
-        })
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('rentals:checkout'))
